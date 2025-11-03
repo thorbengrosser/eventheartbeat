@@ -1,15 +1,14 @@
-# EventMobi Real-time Dashboard Extension
+# EventMobi Heartbeat
 
-A real-time animated dashboard extension for EventMobi that visualizes event activity with colorful bubble animations when attendees check into events or sessions.
+An experimental, living dashboard that turns EventMobi check-ins into sound and motion. Paste your API key, pick an event, and watch check-ins pulse across the screen.
 
 ## Features
 
-- Real-time attendee count display
-- Session and event check-in tracking
-- Animated bubble notifications: "NAME just checked into [EVENT/SESSION NAME]"
-- Fullscreen mode for event displays
+- Real-time attendee counts and session/event check-ins
+- Animated bubble notifications per check-in
+- Fullscreen display mode
 - Optional sound effects
-- "Symphony" sound mode: step through an ABC tune (one note per check-in)
+- Symphony mode: step through an ABC tune (one note per check-in)
 - WebSocket-based real-time updates via EventMobi webhooks
 
 ## Tech Stack
@@ -18,128 +17,69 @@ A real-time animated dashboard extension for EventMobi that visualizes event act
 - **Frontend**: React, Socket.IO client
 - **API**: EventMobi API v4
 
-## Setup
+## Quick Start
 
-### Backend Setup
-
-1. Navigate to backend directory:
+### Backend
 ```bash
 cd backend
+./setup.sh                # Windows: setup.bat
+python -m backend.app     # http://localhost:5001
 ```
 
-2. Set up the virtual environment and install dependencies:
-
-**On macOS/Linux:**
-```bash
-./setup.sh
-```
-
-**On Windows:**
-```bash
-setup.bat
-```
-
-**Or manually:**
-```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-3. Run the Flask server:
-```bash
-# Make sure virtual environment is activated
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-python app.py
-```
-
-The backend will run on `http://localhost:5001` (default port changed from 5000 to avoid conflict with macOS AirPlay Receiver)
-
-**Note:** Always activate the virtual environment before running the server. You'll see `(venv)` in your terminal prompt when it's active.
-
-### Frontend Setup
-
-1. Navigate to frontend directory:
+### Frontend
 ```bash
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
+HOST=127.0.0.1 PORT=3001 npm start   # proxies API to :5001
 ```
-
-3. Run the development server:
+If your environment restricts host binding, try:
 ```bash
-npm start
+WDS_ALLOWED_HOSTS=localhost DANGEROUSLY_DISABLE_HOST_CHECK=true HOST=localhost PORT=3001 npm start
 ```
 
-The frontend will run on `http://localhost:3000`
-
-### Webhook Setup for Development
-
-For local development, you'll need to expose your Flask server to the internet so EventMobi can send webhooks. Use ngrok:
-
+### Webhooks (local dev)
+Expose the backend with ngrok so EventMobi can reach your webhook:
 ```bash
 ngrok http 5001
 ```
-
-**Note:** Port 5001 is used by default to avoid conflicts with macOS AirPlay Receiver on port 5000. You can change the port by setting the `PORT` environment variable.
-
-Copy the HTTPS URL provided by ngrok and use it when registering webhooks.
+Copy the HTTPS URL from ngrok and paste it into “Webhook Base URL” during setup. Webhook registration is best‑effort; the app also refreshes data periodically.
 
 ## Usage
 
-1. Start both backend and frontend servers
-2. Open the frontend in your browser
-3. Enter your EventMobi API key
-4. Select an event from the dropdown
-5. The dashboard will initialize and register webhooks
-6. Use fullscreen mode for live event displays
-7. Toggle sound effects on/off as needed
+1) Start Page
+- Paste your EventMobi API key. The key stays in your browser (sessionStorage by default or localStorage if you tick “Keep my key on this device”).
+- Optional: watch the 45s demo or open Questions/Imprint.
+
+2) Setup → Select Event
+- Choose your event and optionally set a webhook base URL (ngrok or deployment URL).
+
+3) Dashboard
+- Bubbles and sound react to check-ins in real time. Use Settings to tweak visuals and sound modes (Heartbeat/Symphony). Fullscreen supported.
 
 ## Production Deployment
 
-You can deploy using Docker (single container). The container serves the Flask API and WebSockets and also serves the built React app as static files.
-
-### Build and run with Docker
-
+Build and run with Docker from repo root:
 ```bash
-# From repo root
 docker build -t em-live-checkins:latest .
 docker run --rm -p 5001:5001 \
   -e SECRET_KEY=change-me \
-  -e CORS_ORIGINS="https://eventheartbeat.thorben.io,http://localhost:3000" \
+  -e CORS_ORIGINS="https://eventheartbeat.thorben.io,http://localhost:3001" \
   -e WEBHOOK_BASE_URL="https://eventheartbeat.thorben.io" \
   -e APP_DEBUG=false \
   -e REACT_APP_API_URL="https://eventheartbeat.thorben.io" \
   --name em-live-checkins em-live-checkins:latest
 ```
-
-The app will be available on http://localhost:5001. In production you will place Apache in front and proxy to the container.
-Gunicorn timeouts are set to handle slow upstream API calls (`--graceful-timeout 30 --timeout 90`).
+The app will be available on http://localhost:5001. In production, place Apache/Nginx in front and proxy to the container. Socket.IO lives at `/socket.io/`.
 
 ### Apache reverse proxy (WebSockets aware)
-
 Enable required modules:
-
 ```bash
 a2enmod proxy proxy_http proxy_wstunnel headers rewrite
 ```
-
 Example vhost snippet:
-
 ```
 <VirtualHost *:80>
   ServerName eventheartbeat.thorben.io
-
-  # Redirect to HTTPS if you terminate TLS at Apache
   RewriteEngine On
   RewriteCond %{HTTPS} !=on
   RewriteRule ^/?(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
@@ -147,8 +87,6 @@ Example vhost snippet:
 
 <VirtualHost *:443>
   ServerName eventheartbeat.thorben.io
-
-  # SSL config here (certs)...
 
   ProxyPreserveHost On
   RequestHeader set X-Forwarded-Proto "https"
@@ -161,7 +99,6 @@ Example vhost snippet:
   ProxyPass        /socket.io/ http://127.0.0.1:5001/socket.io/ retry=0 timeout=300 Keepalive=On
   ProxyPassReverse /socket.io/ http://127.0.0.1:5001/socket.io/
 
-  # Upgrade headers
   RewriteEngine On
   RewriteCond %{HTTP:Upgrade} =websocket [NC]
   RewriteRule /(.*)           ws://127.0.0.1:5001/$1 [P,L]
@@ -170,9 +107,7 @@ Example vhost snippet:
 </VirtualHost>
 ```
 
-Set environment variables in your container runner or Docker Compose. The server does not store API keys; the browser sends them with each request.
-
-## API Endpoints
+## API Endpoints (browser sends API key with each request)
 
 - `POST /api/setup` - Validate API key and fetch events
 - `GET /api/events` - List available events

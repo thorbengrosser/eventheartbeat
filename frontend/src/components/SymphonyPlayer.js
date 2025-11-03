@@ -5,7 +5,7 @@
 import ABCJS from 'abcjs';
 import Soundfont from 'soundfont-player';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
 
 // Singleton state
 const state = {

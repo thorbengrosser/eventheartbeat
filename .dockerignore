@@ -1,0 +1,23 @@
+# Node artifacts
+frontend/node_modules
+frontend/.cache
+
+# Python venvs
+backend/venv
+
+# Byte-compiled / optimized / DLL files
+__pycache__
+*.py[cod]
+*$py.class
+
+# Local env files
+.env
+
+# Git
+.git
+.gitignore
+
+# OS
+.DS_Store
+
+

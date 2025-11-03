@@ -1,0 +1,124 @@
+.bubble-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--bubble-color, #1a4d8c) 0%, var(--bubble-color, #6b3fa0) 100%);
+  border-radius: 50px;
+  padding: 16px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: bubbleFloat 30s ease-out forwards;
+  pointer-events: auto;
+  max-width: 300px;
+  min-width: 200px;
+}
+
+.bubble-content {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.bubble-symbol {
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+@keyframes bubbleFloat {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) scale(0.5);
+  }
+  5% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-20px) scale(1);
+  }
+  95% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(calc(-100vh + 200px)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-100vh + 150px)) scale(0.9);
+  }
+}
+
+/* Variant animations for different positions (stable classes to avoid nth-child resets) */
+.bubble-left {
+  animation: bubbleFloatLeft 30s ease-out forwards;
+}
+
+.bubble-right {
+  animation: bubbleFloatRight 30s ease-out forwards;
+}
+
+@keyframes bubbleFloatLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-20%) translateY(0) scale(0.5);
+  }
+  5% {
+    opacity: 1;
+    transform: translateX(-20%) translateY(-20px) scale(1);
+  }
+  95% {
+    opacity: 1;
+    transform: translateX(-20%) translateY(calc(-100vh + 200px)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-20%) translateY(calc(-100vh + 150px)) scale(0.9);
+  }
+}
+
+@keyframes bubbleFloatRight {
+  0% {
+    opacity: 0;
+    transform: translateX(-80%) translateY(0) scale(0.5);
+  }
+  5% {
+    opacity: 1;
+    transform: translateX(-80%) translateY(-20px) scale(1);
+  }
+  95% {
+    opacity: 1;
+    transform: translateX(-80%) translateY(calc(-100vh + 200px)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-80%) translateY(calc(-100vh + 150px)) scale(0.9);
+  }
+}
+
+@media (max-width: 768px) {
+  .bubble {
+    max-width: 250px;
+    min-width: 180px;
+    padding: 12px 20px;
+  }
+
+  .bubble-content {
+    font-size: 14px;
+  }
+}
+

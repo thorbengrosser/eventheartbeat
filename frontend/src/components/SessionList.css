@@ -1,0 +1,316 @@
+/* CSS Variables for theming */
+:root {
+  --pill-bg: rgba(255, 255, 255, 0.85);
+  --pill-fg: hsl(240, 10%, 10%);
+  --pill-border: hsl(240, 5%, 84%);
+  --pill-time-bg: hsl(240, 5%, 96%);
+  --pill-time-fg: hsl(240, 6%, 25%);
+  --progress-ok: hsl(160, 84%, 39%);
+  --progress-warn: hsl(35, 96%, 50%);
+  --progress-hot: hsl(0, 84%, 60%);
+  --progress-unknown: hsl(220, 90%, 56%);
+}
+
+/* Rail container */
+.session-list-rail {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(260px, 32vw, 360px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 8px;
+  pointer-events: auto;
+}
+
+/* Scrollbar styling */
+.session-list-rail::-webkit-scrollbar {
+  width: 6px;
+}
+
+.session-list-rail::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.session-list-rail::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.session-list-rail::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Session Pill */
+.session-pill {
+  position: relative;
+  width: 100%;
+  height: 48px; /* Compact height - reduced from 56px */
+  min-height: 48px;
+  padding: 0 10px;
+  border: 1px solid var(--pill-border);
+  border-radius: 12px;
+  background: var(--pill-bg);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.session-pill:hover {
+  border-color: hsl(240, 10%, 60%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  transform: translateX(2px);
+}
+
+.session-pill:focus {
+  outline: 2px solid hsl(240, 90%, 56%);
+  outline-offset: 2px;
+}
+
+.session-pill:focus-visible {
+  outline: 2px solid hsl(240, 90%, 56%);
+  outline-offset: 2px;
+}
+
+/* Progress background - fills left % of pill */
+.session-progress-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.session-progress-fill {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Baseline for sessions without capacity */
+.session-progress-baseline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0.6;
+}
+
+/* Utilization color classes */
+.util-ok .session-progress-fill {
+  background: var(--progress-ok);
+  opacity: 0.6;
+}
+
+.util-warn .session-progress-fill {
+  background: var(--progress-warn);
+  opacity: 0.6;
+}
+
+.util-hot .session-progress-fill {
+  background: var(--progress-hot);
+  opacity: 0.6;
+}
+
+.util-overflow .session-progress-fill {
+  background: var(--progress-hot);
+  opacity: 0.7;
+  width: 100% !important;
+}
+
+.util-unknown .session-progress-baseline {
+  background: var(--progress-unknown);
+}
+
+/* Overflow indicator - diagonal stripes */
+.session-progress-overflow {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 4px,
+    rgba(255, 0, 0, 0.25) 4px 8px
+  );
+  pointer-events: none;
+}
+
+/* Content layer - positioned above progress */
+.session-pill-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  color: var(--pill-fg);
+}
+
+/* Time badge */
+.session-time-badge {
+  flex-shrink: 0;
+  min-width: 50px;
+  padding: 3px 6px;
+  background: var(--pill-time-bg);
+  color: var(--pill-time-fg);
+  border-radius: 6px;
+  font-size: clamp(11px, 0.6875rem, 12px);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Session title */
+.session-title {
+  flex: 1;
+  font-size: clamp(12px, 0.75rem, 14px);
+  font-weight: 600;
+  color: var(--pill-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+  min-width: 0; /* Allow flex shrinking */
+}
+
+/* Check-in count */
+.session-count {
+  flex-shrink: 0;
+  font-size: clamp(11px, 0.6875rem, 12px);
+  font-weight: 700;
+  color: var(--pill-fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: 8px;
+}
+
+/* Ultra-compact variant (44px height) */
+.session-pill.ultra {
+  height: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  gap: 8px;
+}
+
+.session-pill.ultra .session-time-badge {
+  min-width: 48px;
+  padding: 3px 6px;
+  font-size: 10px;
+}
+
+.session-pill.ultra .session-title {
+  font-size: 12px;
+}
+
+.session-pill.ultra .session-count {
+  font-size: 11px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .session-list-rail {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-height: 400px;
+    margin-bottom: 20px;
+  }
+}
+
+/* Check-in pop animation */
+.checkin-pop {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  background: linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(160, 84%, 50%) 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  pointer-events: none;
+  animation: checkinPop 1.5s ease-out forwards;
+}
+
+@keyframes checkinPop {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.2);
+  }
+  40% {
+    transform: translateY(-70%) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-90%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-110%) scale(0.8);
+  }
+}
+
+/* Pulse animation for pill when someone checks in */
+.session-pill.just-checked-in {
+  animation: pillPulse 0.6s ease-out;
+}
+
+@keyframes pillPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Empty state */
+.session-list-empty {
+  padding: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --pill-bg: rgba(255, 255, 255, 0.95);
+    --pill-fg: hsl(240, 10%, 0%);
+    --pill-border: hsl(240, 5%, 20%);
+  }
+  
+  .session-pill {
+    border-width: 2px;
+  }
+}

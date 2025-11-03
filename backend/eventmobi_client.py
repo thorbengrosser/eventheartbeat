@@ -368,13 +368,26 @@ class EventMobiClient:
                     # Fallback: if it's not a set (shouldn't happen), default to 0
                     checkin_count = 0
                 
-                # Get capacity - capacity_limit is sortable but not returned in API response
-                # If capacity becomes available in the future, it would be here
+                # Get capacity and registered counts
                 capacity = None
-                if session.get('capacity_limit'):
-                    capacity = session.get('capacity_limit')
-                elif session.get('capacity'):
-                    capacity = session.get('capacity')
+                registered = None
+                cap_field = session.get('capacity')
+                if isinstance(cap_field, dict):
+                    # New API shape: { limit: <int|null>, used: <int|null> }
+                    limit_val = cap_field.get('limit')
+                    used_val = cap_field.get('used')
+                    if isinstance(limit_val, (int, float)):
+                        capacity = int(limit_val)
+                    elif limit_val is None:
+                        capacity = None
+                    if isinstance(used_val, (int, float)):
+                        registered = int(used_val)
+                else:
+                    # Legacy fallbacks
+                    if session.get('capacity_limit'):
+                        capacity = session.get('capacity_limit')
+                    elif cap_field:
+                        capacity = cap_field
                 
                 # Extract location - can be an object with 'label' or a string
                 location_obj = session.get('location')
@@ -394,6 +407,7 @@ class EventMobiClient:
                     'end_datetime': end_str,
                     'checkin_count': checkin_count,
                     'capacity': int(capacity) if capacity else None,
+                    'registered': int(registered) if registered is not None else None,
                     'location': location_name,
                 })
             

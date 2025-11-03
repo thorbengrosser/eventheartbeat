@@ -1,0 +1,124 @@
+.start-app { min-height: 100vh; position: relative; color: var(--text-color, #ffffff);
+  background: linear-gradient(135deg, var(--primary-color, #667eea) 0%, var(--secondary-color, #764ba2) 100%);
+  background-attachment: fixed; }
+
+.gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.start-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 40px;
+}
+
+.brand-header {
+  max-width: 720px;
+  text-align: center;
+  margin: 40px 0 24px;
+}
+
+.brand-header h1 {
+  font-size: 32px;
+  margin: 0 0 8px;
+}
+
+.brand-header .tagline { font-size: 16px; margin: 0 0 6px; color: rgba(255,255,255,0.9); }
+.brand-header .sub { font-size: 14px; margin: 0; color: rgba(255,255,255,0.85); }
+
+.setup-card {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px);
+}
+
+.form-row { display: flex; flex-direction: column; gap: 8px; }
+.form-row label { font-size: 14px; font-weight: 600; color: #eaeaff; }
+
+.input-row { display: flex; gap: 8px; }
+.input-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.25);
+  color: var(--text-color, #ffffff);
+}
+.input-row input:focus {
+  outline: none;
+  border-color: var(--primary-color, #667eea);
+}
+
+.btn-ghost {
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.1);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.helper { font-size: 12px; color: #aeb4ff; margin: 4px 0 0; }
+.error { font-size: 13px; color: #ff8a8a; margin: 4px 0 0; }
+
+.remember { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; font-size: 14px; color: #dde1ff; }
+
+.actions { display: flex; gap: 10px; margin-top: 12px; }
+.btn-primary, .btn-secondary {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-primary { background: linear-gradient(135deg, var(--primary-color, #667eea), var(--secondary-color, #764ba2)); color: white; }
+.btn-secondary { background: rgba(255,255,255,0.15); color: #ffffff; }
+
+.audio-note { font-size: 12px; color: #aeb4ff; margin-top: 10px; }
+
+.footer-links { display: flex; gap: 16px; margin-top: 18px; }
+.linklike { background: none; border: none; color: #ffffff; text-decoration: underline; cursor: pointer; padding: 0; opacity: 0.95; }
+.footer-links a.linklike { text-decoration: underline; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulse-once { animation: pulse 1.2s ease-out 1; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.35); transform: scale(1); }
+    70% { box-shadow: 0 0 0 12px rgba(255,255,255,0); transform: scale(1.02); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); transform: scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-once { animation: none; }
+}
+
+/* Dialog styles for Video and FAQ */
+.video-dialog::backdrop, .faq-dialog::backdrop, .imprint-dialog::backdrop { background: rgba(0,0,0,0.5); }
+.video-dialog, .faq-dialog, .imprint-dialog { border: none; padding: 0; background: transparent; }
+.video-dialog[open], .faq-dialog[open], .imprint-dialog[open] { width: 100vw; height: 100vh; position: fixed; inset: 0; display: grid; place-items: center; margin: 0; }
+.video-modal, .faq-modal, .imprint-modal { width: min(92vw, 820px); max-height: 86vh; overflow: auto; background: rgba(0,0,0,0.35); color: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
+.video-header, .faq-header, .imprint-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.video-header h2, .faq-header h2, .imprint-header h2 { margin: 0; font-size: 18px; }
+.close-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.25); color: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.video-body { margin-top: 10px; }
+.video-thumbs { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.thumb { background: rgba(255,255,255,0.12); border: 1px solid transparent; border-radius: 8px; padding: 4px; cursor: pointer; }
+.thumb.active { border-color: rgba(255,255,255,0.6); }
+.thumb img { width: 120px; height: auto; display: block; border-radius: 6px; }
+.poster-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.35); color: #fff; font-weight: 700; }
+.faq-body dl { margin: 0; }
+.faq-body dt { font-weight: 800; margin-top: 12px; font-size: 16px; }
+.faq-body dd { margin: 6px 0 10px 0; opacity: 0.95; font-size: 14px; }
+.imprint-body { font-size: 13px; line-height: 1.5; }
+
+

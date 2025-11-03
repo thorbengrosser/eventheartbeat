@@ -1,16 +1,41 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Setup.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
 
-function Setup({ onSetupComplete }) {
-  const [apiKey, setApiKey] = useState('');
+function Setup({ onSetupComplete, initialApiKey, initialStep }) {
+  const [apiKey, setApiKey] = useState(initialApiKey || '');
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [webhookBaseUrl, setWebhookBaseUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // 1: API key, 2: Event selection
+  const [step, setStep] = useState(initialStep === 2 ? 2 : 1); // 1: API key, 2: Event selection
+
+  // If we jump directly to step 2 (StartPage path), fetch events here using stored key
+  useEffect(() => {
+    if (step !== 2) return;
+    const key = (initialApiKey || '').trim() || localStorage.getItem('eventHeartbeat:key') || sessionStorage.getItem('eventHeartbeat:key') || '';
+    if (!key) return;
+    if (events && events.length > 0) return;
+    setApiKey(key);
+    setLoading(true);
+    setError('');
+    fetch(`${API_BASE_URL}/api/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: key })
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to validate API key');
+        }
+        setEvents(data.events || []);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [step]);
 
   const handleApiKeySubmit = async (e) => {
     e.preventDefault();
@@ -114,15 +139,16 @@ function Setup({ onSetupComplete }) {
   return (
     <div className="setup-container">
       <div className="setup-card">
-        <h1>EventMobi Dashboard Setup</h1>
-        <p className="setup-subtitle">Configure your real-time event dashboard</p>
+        <h1>EventMobi Heartbeat Setup</h1>
+        <p className="setup-subtitle">Configure your real-time event experience</p>
         <div className="setup-info" style={{ marginBottom: '1rem' }}>
           <p>
             This project blends art and live data. Your API key stays in your browser and is sent with each request; it is not stored on the server.
           </p>
-          <p>
-            <a href="/imprint" target="_blank" rel="noreferrer">Imprint</a> ·
-            <a href="/questions" target="_blank" rel="noreferrer" style={{ marginLeft: '0.5rem' }}>Questions</a>
+          <p style={{ display: 'flex', gap: '0.5rem' }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); try { document.querySelector('button.linklike:nth-of-type(2)')?.click(); } catch (_) {} }}>Imprint & Contact</a>
+            <span>·</span>
+            <a href="#" onClick={(e) => { e.preventDefault(); try { document.querySelector('button.linklike:nth-of-type(1)')?.click(); } catch (_) {} }}>Questions</a>
           </p>
         </div>
 

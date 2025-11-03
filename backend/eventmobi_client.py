@@ -1,7 +1,7 @@
 import requests
 import os
 from typing import List, Dict, Optional
-from config import Config
+from backend.config import Config
 
 
 class EventMobiClient:

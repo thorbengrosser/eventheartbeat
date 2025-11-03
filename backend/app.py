@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from eventmobi_client import EventMobiClient
-from webhook_handler import WebhookHandler
-from config import Config
+from backend.eventmobi_client import EventMobiClient
+from backend.webhook_handler import WebhookHandler
+from backend.config import Config
 import os
 from urllib.parse import urljoin
 from pathlib import Path

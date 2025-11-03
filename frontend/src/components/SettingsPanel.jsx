@@ -217,9 +217,11 @@ function SettingsPanel({
 
       setSuccess('Settings saved successfully!');
       
-      // Register webhook in background (don't wait for it)
-      if (selectedEventId && selectedEventId !== currentEventId) {
-        const webhookUrl = webhookBaseUrl.trim() || API_BASE_URL;
+      // Register or re-register webhook in background (don't wait for it)
+      const prevWebhookBase = currentWebhookBaseUrl || '';
+      const normalizedNewWebhookBase = (webhookBaseUrl || '').trim();
+      if (selectedEventId && (selectedEventId !== currentEventId || normalizedNewWebhookBase !== prevWebhookBase)) {
+        const webhookUrl = normalizedNewWebhookBase || API_BASE_URL;
         fetch(`${API_BASE_URL}/api/event/${selectedEventId}/register-webhook`, {
           method: 'POST',
           headers: {

@@ -117,10 +117,13 @@ docker run --rm -p 5001:5001 \
   -e SECRET_KEY=change-me \
   -e CORS_ORIGINS="https://eventheartbeat.thorben.io,http://localhost:3000" \
   -e WEBHOOK_BASE_URL="https://eventheartbeat.thorben.io" \
+  -e APP_DEBUG=false \
+  -e REACT_APP_API_URL="https://eventheartbeat.thorben.io" \
   --name em-live-checkins em-live-checkins:latest
 ```
 
 The app will be available on http://localhost:5001. In production you will place Apache in front and proxy to the container.
+Gunicorn timeouts are set to handle slow upstream API calls (`--graceful-timeout 30 --timeout 90`).
 
 ### Apache reverse proxy (WebSockets aware)
 
@@ -174,7 +177,7 @@ Set environment variables in your container runner or Docker Compose. The server
 - `POST /api/setup` - Validate API key and fetch events
 - `GET /api/events` - List available events
 - `GET /api/event/{event_id}/stats` - Get current statistics
-- `GET /api/event/{event_id}/active-sessions` - Get active/nearby sessions with check-in counts
+- `GET /api/event/{event_id}/active-sessions` - Get active/nearby sessions with check-in counts (up to 15, newest first)
 - `POST /webhook/eventmobi` - Receive webhook events from EventMobi
 - `POST /api/event/{event_id}/register-webhook` - Register webhook with EventMobi
 - `GET /api/songs` - List available `.abc` songs from backend/abc

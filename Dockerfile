@@ -45,6 +45,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -fsS http://127.0.0.1:${PORT}/api/health || exit 1
 
 # Run with eventlet worker to support WebSockets
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:5001", "backend.app:app"]
+CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:5001", "--graceful-timeout", "30", "--timeout", "90", "backend.app:app"]
 
 

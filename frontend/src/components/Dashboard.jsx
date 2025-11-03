@@ -8,6 +8,7 @@ import './Dashboard.css';
 import SymphonyPlayer from './SymphonyPlayer';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
 function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning, onReset }) {
   // Load from localStorage if props not provided or empty
@@ -43,7 +44,7 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
     const savedEventName = localStorage.getItem('eventmobi_event_name') || '';
     const trimmedSaved = savedEventName.trim();
     
-    console.log('Event name sync check:', {
+    if (IS_DEV) console.log('Event name sync check:', {
       propEventName: eventName,
       trimmedProp: trimmedEventName,
       currentState: currentEventName,
@@ -52,10 +53,10 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
     
     // Priority: prop > localStorage > current state
     if (trimmedEventName && trimmedEventName !== currentEventName) {
-      console.log('Setting event name from prop:', trimmedEventName);
+      if (IS_DEV) console.log('Setting event name from prop:', trimmedEventName);
       setCurrentEventName(trimmedEventName);
     } else if (!trimmedEventName && trimmedSaved && trimmedSaved !== currentEventName) {
-      console.log('Setting event name from localStorage:', trimmedSaved);
+      if (IS_DEV) console.log('Setting event name from localStorage:', trimmedSaved);
       setCurrentEventName(trimmedSaved);
     }
   }, [eventName]); // Only depend on eventName prop, not currentEventName (to avoid loops)
@@ -65,23 +66,23 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
   // Also fetch event details from API if event name is missing
   useEffect(() => {
     const savedEventName = localStorage.getItem('eventmobi_event_name');
-    console.log('Mount useEffect - localStorage event name:', savedEventName);
-    console.log('Mount useEffect - current state:', currentEventName);
-    console.log('Mount useEffect - prop eventName:', eventName);
+    if (IS_DEV) console.log('Mount useEffect - localStorage event name:', savedEventName);
+    if (IS_DEV) console.log('Mount useEffect - current state:', currentEventName);
+    if (IS_DEV) console.log('Mount useEffect - prop eventName:', eventName);
     
     if (savedEventName && savedEventName.trim()) {
       const trimmedName = savedEventName.trim();
-      console.log('Setting event name from localStorage on mount:', trimmedName);
+      if (IS_DEV) console.log('Setting event name from localStorage on mount:', trimmedName);
       setCurrentEventName(trimmedName);
     } else {
-      console.log('No event name in localStorage, current value:', currentEventName || '(empty)');
+      if (IS_DEV) console.log('No event name in localStorage, current value:', currentEventName || '(empty)');
       
       // If we have event ID and API key but no event name, fetch it from API
       const savedEventId = localStorage.getItem('eventmobi_event_id');
       const savedApiKey = localStorage.getItem('eventmobi_api_key');
       
       if (savedEventId && savedApiKey && !currentEventName) {
-        console.log('Fetching event details to get event name...');
+        if (IS_DEV) console.log('Fetching event details to get event name...');
         fetch(`${API_BASE_URL}/api/event/${savedEventId}/details?api_key=${encodeURIComponent(savedApiKey)}`)
           .then(response => {
             if (response.ok) {
@@ -92,16 +93,16 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
           .then(data => {
             const fetchedName = data.name || '';
             if (fetchedName && fetchedName.trim()) {
-              console.log('Fetched event name from API:', fetchedName);
+              if (IS_DEV) console.log('Fetched event name from API:', fetchedName);
               const trimmedName = fetchedName.trim();
               setCurrentEventName(trimmedName);
               localStorage.setItem('eventmobi_event_name', trimmedName);
             } else {
-              console.warn('Event details fetched but no name found:', data);
+              if (IS_DEV) console.warn('Event details fetched but no name found:', data);
             }
           })
           .catch(err => {
-            console.warn('Could not fetch event details:', err);
+            if (IS_DEV) console.warn('Could not fetch event details:', err);
           });
       }
     }
@@ -184,45 +185,48 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
     }
   }, [soundMode, symphonySong]);
 
-  const fetchStats = React.useCallback(async () => {
+  const fetchStats = React.useCallback(async (signal) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/event/${currentEventId}/stats?api_key=${encodeURIComponent(currentApiKey)}`);
+      const response = await fetch(`${API_BASE_URL}/api/event/${currentEventId}/stats?api_key=${encodeURIComponent(currentApiKey)}`, { signal });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to fetch stats' }));
         throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch stats`);
       }
       const data = await response.json();
-      console.log('Stats received:', data);
+      if (IS_DEV) console.log('Stats received:', data);
       setStats(data);
       // Reset increments when we get fresh stats
       setEventIncrement(0);
       setSessionIncrement(0);
       setError(''); // Clear any previous errors
     } catch (err) {
+      if (signal && signal.aborted) return;
       console.error('Error fetching stats:', err);
       setError(`Error loading stats: ${err.message}`);
       // Retry after 5 seconds
       setTimeout(() => {
-        fetchStats();
+        if (signal && signal.aborted) return;
+        fetchStats(signal);
       }, 5000);
     }
   }, [currentApiKey, currentEventId]);
 
-  const fetchActiveSessions = React.useCallback(async () => {
+  const fetchActiveSessions = React.useCallback(async (signal) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/event/${currentEventId}/active-sessions?api_key=${encodeURIComponent(currentApiKey)}`);
+      const response = await fetch(`${API_BASE_URL}/api/event/${currentEventId}/active-sessions?api_key=${encodeURIComponent(currentApiKey)}`, { signal });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to fetch sessions' }));
         throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch sessions`);
       }
       const data = await response.json();
       const sessionsArray = Array.isArray(data) ? data : [];
-      console.log('Fetched active sessions:', sessionsArray.length, sessionsArray);
+      if (IS_DEV) console.log('Fetched active sessions:', sessionsArray.length, sessionsArray);
       if (sessionsArray.length === 0) {
-        console.warn('No active sessions found. Response:', data);
+        if (IS_DEV) console.warn('No active sessions found. Response:', data);
       }
       setActiveSessions(sessionsArray);
     } catch (err) {
+      if (signal && signal.aborted) return;
       console.error('Error fetching active sessions:', err);
       // Don't show error to user, just log it
       setActiveSessions([]); // Set to empty array on error
@@ -237,9 +241,10 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
     
     // Fetch initial stats once on mount or when settings change
     // Delay slightly to let socket connect first
+    const controller = new AbortController();
     const initialFetchTimeout = setTimeout(() => {
-      fetchStats();
-      fetchActiveSessions();
+      fetchStats(controller.signal);
+      fetchActiveSessions(controller.signal);
     }, 500);
 
     // Also refresh stats periodically (every 3 minutes) to keep counts accurate
@@ -512,10 +517,11 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
           socketRef.current.removeAllListeners();
           socketRef.current.disconnect();
         } catch (e) {
-          console.warn('Error cleaning up socket:', e);
+          if (IS_DEV) console.warn('Error cleaning up socket:', e);
         }
         socketRef.current = null;
       }
+      try { controller.abort(); } catch (_) {}
     };
   }, [currentApiKey, currentEventId, fetchStats, fetchActiveSessions]);
 

@@ -11,6 +11,15 @@ from pathlib import Path
 # Avoid eventlet greendns issues resolving external hosts (e.g., uapi.eventmobi.com)
 os.environ.setdefault('EVENTLET_NO_GREENDNS', 'yes')
 
+# Debug logging helper (controlled by APP_DEBUG=true)
+APP_DEBUG = os.environ.get('APP_DEBUG', 'false').lower() == 'true'
+def debug_print(*args, **kwargs):
+    if APP_DEBUG:
+        try:
+            print(*args, **kwargs)
+        except Exception:
+            pass
+
 app = Flask(__name__, static_folder=None)
 app.config['SECRET_KEY'] = Config.SECRET_KEY
 CORS(app, resources={r"/*": {"origins": Config.CORS_ORIGINS}})
@@ -20,18 +29,13 @@ socketio = SocketIO(
     async_mode='eventlet',
     ping_timeout=60,
     ping_interval=25,
-    max_http_buffer_size=1e6,
+    max_http_buffer_size=1000000,
     logger=True,
     engineio_logger=False
 )
 
 # Track rooms joined per socket id for cleanup; do not store API keys
 socket_rooms = {}
-
-# Simple cache for check-in data to avoid redundant API calls
-# Key: (event_id, entity_type), Value: (data, timestamp)
-checkin_cache = {}
-CHECKIN_CACHE_TTL = 60  # Cache for 60 seconds
 
 # Directory for ABC songs
 ABC_DIR = Path(__file__).resolve().parent / 'abc'
@@ -65,13 +69,13 @@ def setup():
             return jsonify({'error': 'Invalid API key'}), 401
         except Exception as e:
             import traceback
-            print(f"Error fetching events: {e}")
+            debug_print(f"Error fetching events: {e}")
             traceback.print_exc()
             return jsonify({'error': f'Failed to fetch events: {str(e)}'}), 500
             
     except Exception as e:
         import traceback
-        print(f"Error in setup endpoint: {e}")
+        debug_print(f"Error in setup endpoint: {e}")
         traceback.print_exc()
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
@@ -213,6 +217,12 @@ def get_song(filename):
             return jsonify({'error': 'Invalid path'}), 400
         if not candidate.exists() or not candidate.is_file():
             return jsonify({'error': 'Not found'}), 404
+        # Cap file size to 200KB to avoid excessive reads
+        try:
+            if candidate.stat().st_size > 200 * 1024:
+                return jsonify({'error': 'File too large'}), 413
+        except Exception:
+            pass
         content = candidate.read_text(encoding='utf-8', errors='ignore')
         # Return as plain text so frontend can parse
         return app.response_class(content, mimetype='text/plain; charset=utf-8')
@@ -236,9 +246,9 @@ def register_webhook(event_id):
         client = EventMobiClient(api_key)
         
         # Register webhook for checkins
-        print(f"Attempting to register webhook: type=checkins, url={webhook_url}")
+        debug_print(f"Attempting to register webhook: type=checkins, url={webhook_url}")
         result = client.register_webhook(event_id, webhook_url, 'checkins')
-        print(f"Webhook registration result: {result}")
+        debug_print(f"Webhook registration result: {result}")
         
         # Verify webhook was created/updated by listing webhooks
         webhook_id = None
@@ -261,12 +271,12 @@ def register_webhook(event_id):
             elif isinstance(webhooks, dict):
                 webhook_list = webhooks.get('data', []) or webhooks.get('webhooks', [])
             
-            print(f"Verified: Found {len(webhook_list)} checkins webhook(s)")
+            debug_print(f"Verified: Found {len(webhook_list)} checkins webhook(s)")
             for wh in webhook_list:
                 if wh.get('type') == 'checkins':
-                    print(f"  - Webhook ID: {wh.get('id')}, Enabled: {wh.get('enabled')}, URL: {wh.get('callback_url')}")
+                    debug_print(f"  - Webhook ID: {wh.get('id')}, Enabled: {wh.get('enabled')}, URL: {wh.get('callback_url')}")
         except Exception as verify_err:
-            print(f"Could not verify webhook: {verify_err}")
+            debug_print(f"Could not verify webhook: {verify_err}")
         
         return jsonify({
             'success': True,
@@ -278,7 +288,7 @@ def register_webhook(event_id):
     except Exception as e:
         import traceback
         error_msg = str(e)
-        print(f"Webhook registration error: {error_msg}")
+        debug_print(f"Webhook registration error: {error_msg}")
         traceback.print_exc()
         
         # Return error but don't fail completely - webhook might already be configured
@@ -296,13 +306,13 @@ def receive_webhook():
     try:
         # Handle GET requests (webhook verification from EventMobi)
         if request.method == 'GET':
-            print("Webhook endpoint accessed via GET (verification)")
+            debug_print("Webhook endpoint accessed via GET (verification)")
             return jsonify({'status': 'ok', 'message': 'Webhook endpoint is active'}), 200
         
         # Handle POST requests (actual webhook events)
-        print(f"Webhook received! Headers: {dict(request.headers)}")
-        print(f"Content-Type: {request.content_type}")
-        print(f"Raw data: {request.data[:500] if request.data else 'No data'}")
+        debug_print(f"Webhook received! Headers: {dict(request.headers)}")
+        debug_print(f"Content-Type: {request.content_type}")
+        debug_print(f"Raw data: {request.data[:500] if request.data else 'No data'}")
         
         webhook_data = request.get_json()
         
@@ -310,10 +320,10 @@ def receive_webhook():
             # Some webhooks might send form data
             webhook_data = request.form.to_dict()
             if not webhook_data:
-                print("No JSON or form data found")
+                debug_print("No JSON or form data found")
                 return jsonify({'error': 'No data received'}), 400
         
-        print(f"Webhook data received: {webhook_data}")
+        debug_print(f"Webhook data received: {webhook_data}")
         
         # Process webhook
         event_id = webhook_data.get('event_id')
@@ -331,15 +341,15 @@ def receive_webhook():
                 socketio.emit('checkin_poke', payload, to=str(event_id))
                 return jsonify({'success': True, 'message': 'Webhook broadcast sent'}), 200
             except Exception as emit_err:
-                print(f"Error broadcasting checkin poke: {emit_err}")
+                debug_print(f"Error broadcasting checkin poke: {emit_err}")
                 return jsonify({'success': False, 'message': 'Webhook received but broadcast failed'}), 200
 
         # For non-checkin or missing event_id, ignore gracefully
-        print(f"Webhook ignored or unsupported. Data: {webhook_data}")
+        debug_print(f"Webhook ignored or unsupported. Data: {webhook_data}")
         return jsonify({'success': False, 'message': 'Webhook ignored'}), 200
             
     except Exception as e:
-        print(f"Error processing webhook: {e}")
+        debug_print(f"Error processing webhook: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -348,14 +358,14 @@ def receive_webhook():
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection"""
-    print('Client connected')
+    debug_print('Client connected')
     emit('connected', {'message': 'Connected to EventMobi dashboard'})
 
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Handle client disconnection"""
-    print('Client disconnected')
+    debug_print('Client disconnected')
     # Cleanup joined rooms tracking if present
     sid = request.sid
     if sid in socket_rooms:

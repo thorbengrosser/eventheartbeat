@@ -4,8 +4,9 @@ import './SessionList.css';
 function SessionList({ sessions, recentCheckinSessionId, showCounts = true }) {
   // Debug: log when component renders
   React.useEffect(() => {
-    console.log('SessionList rendered with sessions:', sessions?.length || 0, sessions);
-    if (!sessions || sessions.length === 0) {
+    const IS_DEV = process.env.NODE_ENV !== 'production';
+    if (IS_DEV) console.log('SessionList rendered with sessions:', sessions?.length || 0, sessions);
+    if ((!sessions || sessions.length === 0) && IS_DEV) {
       console.warn('SessionList: No sessions provided or empty array');
     }
   }, [sessions]);
@@ -32,14 +33,14 @@ function SessionList({ sessions, recentCheckinSessionId, showCounts = true }) {
     return 'util-ok';
   };
 
-  // Limit to top 15 sessions and sort by start time (newest first, oldest at bottom)
-  const displaySessions = (sessions || [])
-    .slice(0, 15)
+  // Sort by start time (newest first), then take top 15
+  const displaySessions = [...(sessions || [])]
     .sort((a, b) => {
       const timeA = a.start_datetime ? new Date(a.start_datetime).getTime() : 0;
       const timeB = b.start_datetime ? new Date(b.start_datetime).getTime() : 0;
       return timeB - timeA; // Reverse order: newest first
-    });
+    })
+    .slice(0, 15);
 
   return (
     <div className="session-list-rail">

@@ -8,6 +8,9 @@ import os
 from urllib.parse import urljoin
 from pathlib import Path
 
+# Avoid eventlet greendns issues resolving external hosts (e.g., uapi.eventmobi.com)
+os.environ.setdefault('EVENTLET_NO_GREENDNS', 'yes')
+
 app = Flask(__name__, static_folder=None)
 app.config['SECRET_KEY'] = Config.SECRET_KEY
 CORS(app, resources={r"/*": {"origins": Config.CORS_ORIGINS}})

@@ -35,7 +35,8 @@ COPY --from=frontend-builder /app/frontend/build/ ./backend/static/
 
 # Environment
 ENV PORT=5001 \
-    WEB_CONCURRENCY=1
+    WEB_CONCURRENCY=1 \
+    EVENTLET_NO_GREENDNS=yes
 
 EXPOSE 5001
 

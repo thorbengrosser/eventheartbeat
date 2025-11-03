@@ -273,14 +273,15 @@ function Dashboard({ apiKey, eventId, eventName, webhookBaseUrl, webhookWarning,
     }
 
     const socket = io(API_BASE_URL, {
-      transports: ['websocket', 'polling'],
+      path: '/socket.io/',
+      transports: ['websocket'],
+      upgrade: false,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
       forceNew: true, // Force new connection when settings change
-      upgrade: true,
       autoConnect: true,
     });
 
